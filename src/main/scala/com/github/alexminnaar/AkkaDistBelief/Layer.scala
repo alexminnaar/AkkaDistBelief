@@ -1,7 +1,7 @@
 package com.github.alexminnaar.AkkaDistBelief
 
 import akka.actor.{ActorRef, Actor}
-import breeze.linalg.{*, DenseVector, DenseMatrix}
+import breeze.linalg.{Axis, *, DenseVector, DenseMatrix}
 import com.github.alexminnaar.AkkaDistBelief.DataShard.{ReadyToProcess, FetchParameters}
 import com.github.alexminnaar.AkkaDistBelief.ParameterShard.{ParameterRequest, LatestParameters}
 
@@ -36,9 +36,7 @@ class Layer(replicaId: Int
 
   def receive = {
 
-    /*
-    Before we process a data point, we must update the parameter weights for this layer
-     */
+    //Before we process a data point, we must update the parameter weights for this layer
     case FetchParameters => {
       parameterShardId ! ParameterRequest
       context.become(waitForParameters)
@@ -46,20 +44,20 @@ class Layer(replicaId: Int
 
     case ForwardPass(inputs, target) => {
 
-      val outputs = computeLayerOutputs(inputs, latestWeights) //compute outputs given current weights
-      val activatedOutputs=activationFunction(outputs)
+      //compute outputs given current weights and received inputs, then pass them through activation function
+      val outputs = computeLayerOutputs(inputs, latestWeights)
+      val activatedOutputs = activationFunction(outputs)
 
-      /*
-      If this is not the final layer, compute outputs and send them to child layer.
-      if this is the final layer of the neural network, compute prediction error and send the result backwards.
-      */
       childLayer match {
 
+        //If there is a child layer, send it the outputs with an added bias
         case Some(nextLayer) => {
-          nextLayer ! ForwardPass(activatedOutputs, target) //send them to next layer
-          activations = outputs //also persist them for the backwards pass
+          val outputWithBias = DenseVector.vertcat(DenseVector(1.0), activatedOutputs)
+          nextLayer ! ForwardPass(outputWithBias, target)
+          activations = activatedOutputs //also persist them for the backwards pass
         }
 
+        //if this is the final layer of the neural network, compute prediction error and send the result backwards.
         case _ => context.sender() ! BackwardPass(computePredictionError(activatedOutputs, target))
       }
 
@@ -67,20 +65,25 @@ class Layer(replicaId: Int
 
     case BackwardPass(childDeltas) => {
 
-      val deltas = computeDeltas(childDeltas, activations, latestWeights)
-      val gradient = computeGradient(deltas, activations)
+      //compute gradient of layer weights given deltas from child layer and activations from forward pass and
+      //send the resulting gradient to the parameter shard for updating.
+      val gradient = computeGradient(childDeltas, activations)
+      parameterShardId ! Gradient(gradient)
 
-      /*
-      If there is a parent layer, send the gradients backwards.
-      If this is the first layer, tell the data shard parent that it is ready to process another data point.
-      */
       parentLayer match {
-        case Some(previousLayer) => previousLayer ! BackwardPass(deltas)
+
+        //If there is a parent layer, compute deltas for this layer and send them backwards.  We remove the delta
+        //corresponding to the bias unit because it is not connected to anything in the parent layer thus it should
+        //not affect its gradient.
+        case Some(previousLayer) => {
+          val deltas = computeDeltas(childDeltas, activations, latestWeights)
+          previousLayer ! BackwardPass(deltas(1 to -1))
+        }
+
+        //If this is the first layer, let data shard know we are ready to update weights and process another data point.
         case _ => context.parent ! ReadyToProcess
       }
 
-      //In either case we still need to send the gradient to the parameter shard for updating
-      parameterShardId ! Gradient(gradient)
     }
 
   }
@@ -90,7 +93,7 @@ class Layer(replicaId: Int
 
     /*
     latest parameter update has been fetched from parameter server.  Send message to data shard (i.e. this actor's
-    parent) indicating that this layer is now ready to process the next minibatch of data.
+    parent) indicating that this layer is now ready to process the next data point.
     */
     case LatestParameters(weights) => {
       latestWeights = weights

@@ -4,10 +4,9 @@ import akka.actor.{ActorRef, Props, Actor}
 import breeze.linalg.DenseMatrix
 import breeze.stats.distributions.Gaussian
 import com.github.alexminnaar.AkkaDistBelief.DataShard.ReadyToProcess
-import com.github.alexminnaar.AkkaDistBelief.Master.Start
+import com.github.alexminnaar.AkkaDistBelief.Master.{Done, Start}
 
 object Master {
-
 
   case class Done(dataShardId: Int)
 
@@ -39,17 +38,22 @@ class Master(dataSet: Seq[Example],
     )))
   }
 
-
   //create actors for each data shard/replica.  Each replica needs to know about all parameter shards because they will
   //be reading from them and updating them
   val dataShardActors = dataShards.zipWithIndex.map { dataShard =>
     context.actorOf(Props(new DataShard(dataShard._2, dataShard._1, parameterShardActors)))
   }
 
+  var numShardsFinished=0
 
   def receive = {
 
     case Start => dataShardActors.foreach(_ ! ReadyToProcess)
+
+    case Done(id) => {
+      numShardsFinished+=1
+      if(numShardsFinished==dataShards.size) println("DONE!!!!!!!!!!!!!!!")
+    }
 
   }
 

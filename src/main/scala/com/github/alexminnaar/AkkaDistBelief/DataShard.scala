@@ -25,9 +25,9 @@ class DataShard(shardId: Int,
 
 
   val numLayers = parameterShards.size
+
   //parameter shard corresponding to each layer
   val trainingDataIterator = trainingData.toIterator
-
 
   //create layer actors for this shard'd model replica
   val layers: Array[ActorRef] = new Array[ActorRef](numLayers)
@@ -83,6 +83,7 @@ class DataShard(shardId: Int,
         //If we have processed all of them then we are done.
         else {
           context.parent ! Done(shardId)
+          context.stop(self)
         }
 
         layersNotUpdated = (0 to numLayers - 1).toSet

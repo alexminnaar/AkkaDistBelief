@@ -10,9 +10,7 @@ object ParameterShard {
   case object ParameterRequest
 
   case class LatestParameters(weights: DenseMatrix[Double])
-
 }
-
 
 class ParameterShard(shardId: Int
                      , learningRate: Double
