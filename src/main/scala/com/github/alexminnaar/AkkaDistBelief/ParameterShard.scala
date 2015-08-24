@@ -10,6 +10,7 @@ object ParameterShard {
   case object ParameterRequest
 
   case class LatestParameters(weights: DenseMatrix[Double])
+
 }
 
 class ParameterShard(shardId: Int
@@ -31,14 +32,9 @@ class ParameterShard(shardId: Int
     parameters according to this gradient.
     */
     case Gradient(g) => {
-      latestParameter = updateParameter(g)
+      latestParameter += g * learningRate
     }
 
-  }
-
-  //update the parameters in the direction of the gradient (usual gradient descent procedure)
-  def updateParameter(gradient: DenseMatrix[Double]): DenseMatrix[Double] = {
-    latestParameter + (gradient * learningRate)
   }
 
 }

@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, Actor}
 import breeze.linalg.{Axis, *, DenseVector, DenseMatrix}
 import com.github.alexminnaar.AkkaDistBelief.DataShard.{ReadyToProcess, FetchParameters}
 import com.github.alexminnaar.AkkaDistBelief.ParameterShard.{ParameterRequest, LatestParameters}
+import NeuralNetworkOps._
 
 object Layer {
 
@@ -67,7 +68,7 @@ class Layer(replicaId: Int
 
       //compute gradient of layer weights given deltas from child layer and activations from forward pass and
       //send the resulting gradient to the parameter shard for updating.
-      val gradient = computeGradient(childDeltas, activations)
+      val gradient = computeGradient(childDeltas, activations, activationFunction)
       parameterShardId ! Gradient(gradient)
 
       parentLayer match {
@@ -76,7 +77,7 @@ class Layer(replicaId: Int
         //corresponding to the bias unit because it is not connected to anything in the parent layer thus it should
         //not affect its gradient.
         case Some(previousLayer) => {
-          val deltas = computeDeltas(childDeltas, activations, latestWeights)
+          val deltas = computeDeltas(childDeltas, activations, latestWeights, activationFunctionDerivative)
           previousLayer ! BackwardPass(deltas(1 to -1))
         }
 
@@ -104,45 +105,5 @@ class Layer(replicaId: Int
 
   }
 
-  //
-  def computeLayerOutputs(input: DenseVector[Double]
-                          , weights: DenseMatrix[Double]): DenseVector[Double] = {
-    weights * input
-  }
 
-
-  def computeDeltas(childDeltas: DenseVector[Double]
-                    , thisLayerActivations: DenseVector[Double]
-                    , currentWeights: DenseMatrix[Double]): DenseVector[Double] = {
-
-    val dw = currentWeights.t * childDeltas
-    activationFunctionDerivative(thisLayerActivations) :* dw
-  }
-
-
-  def computeGradient(deltas: DenseVector[Double]
-                      , thisLayerActivations: DenseVector[Double]): DenseMatrix[Double] = {
-    outerProd(deltas, activationFunction(thisLayerActivations))
-  }
-
-
-  def computePredictionError(prediction: DenseVector[Double], target: DenseVector[Double]): DenseVector[Double] = {
-    target - prediction
-  }
-
-
-  /**
-   * Outer-product for two vectors
-   */
-  def outerProd(v1: DenseVector[Double], v2: DenseVector[Double]): DenseMatrix[Double] = {
-
-    var newV1: DenseMatrix[Double] = DenseMatrix(v1.toArray)
-
-    while (newV1.rows != v2.length) {
-      newV1 = DenseMatrix.vertcat(newV1, v1.toDenseMatrix)
-    }
-
-    val bc = newV1(::, *) *= v2
-    bc.underlying
-  }
 }
