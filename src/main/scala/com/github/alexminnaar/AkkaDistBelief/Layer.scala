@@ -54,7 +54,7 @@ class Layer(replicaId: Int
         case Some(nextLayer) => {
           val outputWithBias = DenseVector.vertcat(DenseVector(1.0), activatedOutputs)
           nextLayer ! ForwardPass(outputWithBias, target)
-          activations = activatedOutputs //also persist them for the backwards pass
+          activations = outputWithBias //also persist them for the backwards pass
         }
 
         //if this is the final layer of the neural network, compute prediction error and send the result backwards.

@@ -16,14 +16,14 @@ object Master {
 
 
 class Master(dataSet: Seq[Example],
-             numReplicas: Int,
+             dataPerReplica: Int,
              layerDimensions: Seq[Int],
              learningRate: Double) extends Actor {
 
   val numLayers = layerDimensions.size
 
   //split dataset into shards
-  val dataShards = dataSet.grouped(numReplicas).toSeq
+  val dataShards = dataSet.grouped(dataPerReplica).toSeq
 
 
   //create parameter shards for each layer
