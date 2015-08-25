@@ -34,7 +34,7 @@ class Master(dataSet: Seq[Example],
     parameterShardActors(i) = context.actorOf(Props(new ParameterShard(
       i
       , learningRate
-      , randomMatrix(layerDimensions(i), layerDimensions(i + 1))
+      , NeuralNetworkOps.randomMatrix(layerDimensions(i), layerDimensions(i + 1))
     )))
   }
 
@@ -58,9 +58,5 @@ class Master(dataSet: Seq[Example],
   }
 
 
-  def randomMatrix(numRows: Int, numCols: Int): DenseMatrix[Double] = {
 
-    val samples = Gaussian(0, 1).sample(numRows * numCols).toArray
-    new DenseMatrix[Double](numRows, numCols, samples)
-  }
 }

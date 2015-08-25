@@ -9,7 +9,6 @@ import com.github.alexminnaar.AkkaDistBelief.Master.Done
 
 object DataShard {
 
-
   case object ReadyToProcess
 
   case object FetchParameters

@@ -8,7 +8,6 @@ import NeuralNetworkOps._
 
 object Layer {
 
-
   case class DoneFetchingParameters(layerId: Int)
 
   case class Gradient(g: DenseMatrix[Double])

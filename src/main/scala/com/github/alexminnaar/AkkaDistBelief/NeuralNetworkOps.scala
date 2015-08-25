@@ -1,6 +1,7 @@
 package com.github.alexminnaar.AkkaDistBelief
 
 import breeze.linalg.{*, DenseMatrix, DenseVector}
+import breeze.stats.distributions.Gaussian
 
 
 object NeuralNetworkOps {
@@ -45,4 +46,9 @@ object NeuralNetworkOps {
     bc.underlying
   }
 
+  def randomMatrix(numRows: Int, numCols: Int): DenseMatrix[Double] = {
+
+    val samples = Gaussian(0, 1).sample(numRows * numCols).toArray
+    new DenseMatrix[Double](numRows, numCols, samples)
+  }
 }
