@@ -8,6 +8,7 @@ object NeuralNetworkOps {
 
   def computeLayerOutputs(input: DenseVector[Double]
                           , weights: DenseMatrix[Double]): DenseVector[Double] = {
+
     weights * input
   }
 
@@ -25,15 +26,18 @@ object NeuralNetworkOps {
   def computeGradient(deltas: DenseVector[Double]
                       , thisLayerActivations: DenseVector[Double]
                       , activationFunction: DenseVector[Double] => DenseVector[Double]): DenseMatrix[Double] = {
+
     outerProd(deltas, activationFunction(thisLayerActivations))
   }
 
 
-  def computePredictionError(prediction: DenseVector[Double], target: DenseVector[Double]): DenseVector[Double] = {
+  def computePredictionError(prediction: DenseVector[Double]
+                             , target: DenseVector[Double]): DenseVector[Double] = {
+
     target - prediction
   }
 
-   //Outer-product for two vectors
+  //Outer-product for two vectors
   def outerProd(v1: DenseVector[Double], v2: DenseVector[Double]): DenseMatrix[Double] = {
 
     var newV1: DenseMatrix[Double] = DenseMatrix(v1.toArray)

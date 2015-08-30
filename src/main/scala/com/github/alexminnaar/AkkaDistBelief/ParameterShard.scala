@@ -32,7 +32,8 @@ class ParameterShard(shardId: Int
     parameters according to this gradient.
     */
     case Gradient(g) => {
-      latestParameter += g * learningRate
+
+      latestParameter = latestParameter + (g.t :* learningRate)
     }
 
   }
