@@ -1,7 +1,7 @@
 package com.github.alexminnaar.AkkaDistBelief
 
 import akka.actor.Actor
-import breeze.linalg.DenseMatrix
+import breeze.linalg.{Axis, DenseMatrix}
 import com.github.alexminnaar.AkkaDistBelief.Layer.Gradient
 
 
@@ -33,7 +33,20 @@ class ParameterShard(shardId: Int
     */
     case Gradient(g) => {
 
-      latestParameter = latestParameter + (g.t :* learningRate)
+      println(s"gradient: ${g.t}")
+      println(s"latestParameter: ${latestParameter}")
+
+      val gtrans=g.t
+
+      println(gtrans.rows,gtrans.cols)
+      println(latestParameter.rows,latestParameter.cols)
+
+      //val t=latestParameter + gtrans.delete(0,Axis._1)
+
+      latestParameter = latestParameter + gtrans
+
+      println("new weights: ",latestParameter)
+
     }
 
   }

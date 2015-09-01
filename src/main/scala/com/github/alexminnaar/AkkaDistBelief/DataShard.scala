@@ -2,7 +2,6 @@ package com.github.alexminnaar.AkkaDistBelief
 
 import akka.actor.{Props, ActorRef, Actor}
 import breeze.linalg.DenseVector
-import breeze.numerics.sigmoid
 import com.github.alexminnaar.AkkaDistBelief.Layer.{MyChild, ForwardPass, DoneFetchingParameters}
 import com.github.alexminnaar.AkkaDistBelief.Master.Done
 
@@ -17,13 +16,15 @@ object DataShard {
 
 class DataShard(shardId: Int,
                 trainingData: Seq[Example],
+                activation: DenseVector[Double] => DenseVector[Double],
+                activationDerivative: DenseVector[Double] => DenseVector[Double],
                 parameterShards: Seq[ActorRef]) extends Actor {
 
   import com.github.alexminnaar.AkkaDistBelief.DataShard._
 
   val numLayers = parameterShards.size
 
-  val outputActor= context.actorOf( Props(new OutputActor))
+  val outputActor = context.actorOf(Props(new OutputActor))
 
   //parameter shard corresponding to each layer
   val trainingDataIterator = trainingData.toIterator
@@ -36,14 +37,14 @@ class DataShard(shardId: Int,
     layers(l) = context.actorOf(Props(new Layer(
       shardId
       , l
-      , sigmoidAct
-      , sigmoidPrime
+      , activation
+      , activationDerivative
       , if (l > 0) Some(layers(l - 1)) else None //parent layer actor
       , parameterShards(l)
-    , if(l == numLayers - 1) Some(outputActor) else None))) //layer needs access to its parameter shard to read from and update
+      , if (l == numLayers - 1) Some(outputActor) else None))) //layer needs access to its parameter shard to read from and update
 
     //after each layer actor is created, let the previous layer know that its child is ready
-    if(l>0) layers(l-1) ! MyChild(layers(l))
+    if (l > 0) layers(l - 1) ! MyChild(layers(l))
   }
 
   /*
@@ -92,9 +93,5 @@ class DataShard(shardId: Int,
     }
 
   }
-
-  def sigmoidAct(dv: DenseVector[Double]): DenseVector[Double] = dv.map(x => sigmoid(x))
-
-  def sigmoidPrime(dv: DenseVector[Double]): DenseVector[Double] = dv.map(x => sigmoid(x) * (1 - sigmoid(x)))
 
 }

@@ -1,10 +1,13 @@
 package com.github.alexminnaar.AkkaDistBelief
 
-import breeze.linalg.{*, DenseMatrix, DenseVector}
+import breeze.linalg.{Axis, *, DenseMatrix, DenseVector}
+import breeze.numerics._
 import breeze.stats.distributions.Gaussian
 
 
 object NeuralNetworkOps {
+
+  //def sigmoidPrime(dv: DenseVector[Double]): DenseVector[Double] = dv.map(x => sigmoid(x) * ( - sigmoid(x)))
 
   def computeLayerOutputs(input: DenseVector[Double]
                           , weights: DenseMatrix[Double]): DenseVector[Double] = {
@@ -18,23 +21,32 @@ object NeuralNetworkOps {
                     , currentWeights: DenseMatrix[Double]
                     , activationFunctionDerivative: DenseVector[Double] => DenseVector[Double]): DenseVector[Double] = {
 
-    val dw = currentWeights.t * childDeltas
-    activationFunctionDerivative(thisLayerActivations) :* dw
+    //println("delta comp child deltas ",childDeltas)
+    //println("delta comp weights ",currentWeights.delete(0, Axis._1))
+    //println("activations ",thisLayerActivations(1 to -1))
+
+    val dw = currentWeights.delete(0, Axis._1).t * childDeltas
+    //println("dw ", dw)
+    //println("plain activations ",thisLayerActivations(1 to -1))
+    //println("activation derivative, ", activationFunctionDerivative(thisLayerActivations(1 to -1)))
+
+    activationFunctionDerivative(thisLayerActivations(1 to -1)) :* dw
   }
 
 
   def computeGradient(deltas: DenseVector[Double]
-                      , thisLayerActivations: DenseVector[Double]
-                      , activationFunction: DenseVector[Double] => DenseVector[Double]): DenseMatrix[Double] = {
+                      , thisLayerActivations: DenseVector[Double]): DenseMatrix[Double] = {
 
-    outerProd(deltas, activationFunction(thisLayerActivations))
+    println("deltas: ",deltas)
+    println("activations ",thisLayerActivations)
+    outerProd(deltas, thisLayerActivations)
   }
 
 
   def computePredictionError(prediction: DenseVector[Double]
                              , target: DenseVector[Double]): DenseVector[Double] = {
 
-    target - prediction
+    prediction:* (1.0- prediction):*(target - prediction)
   }
 
   //Outer-product for two vectors

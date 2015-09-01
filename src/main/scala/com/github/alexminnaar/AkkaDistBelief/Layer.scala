@@ -16,7 +16,7 @@ object Layer {
 
   case class BackwardPass(deltas: DenseVector[Double])
 
-  case class MyChild(ar:ActorRef)
+  case class MyChild(ar: ActorRef)
 
 }
 
@@ -26,7 +26,7 @@ class Layer(replicaId: Int
             , activationFunctionDerivative: DenseVector[Double] => DenseVector[Double]
             , parentLayer: Option[ActorRef]
             , parameterShardId: ActorRef
-             ,outputAct:Option[ActorRef]) extends Actor {
+            , outputAct: Option[ActorRef]) extends Actor {
 
   import com.github.alexminnaar.AkkaDistBelief.Layer._
   import com.github.alexminnaar.AkkaDistBelief.OutputActor.Output
@@ -34,7 +34,8 @@ class Layer(replicaId: Int
 
   var latestWeights: DenseMatrix[Double] = _
   var activations: DenseVector[Double] = _
-  var childLayer:Option[ActorRef]= None
+  var activatedInput: DenseVector[Double] = _
+  var childLayer: Option[ActorRef] = None
 
   def receive = {
 
@@ -45,29 +46,38 @@ class Layer(replicaId: Int
     }
 
     //If this layer has a child, its identity will be sent.
-    case MyChild(ar) => childLayer=Some(ar)
+    case MyChild(ar) => childLayer = Some(ar)
 
     case ForwardPass(inputs, target) => {
 
+      activatedInput=parentLayer match {
+        case Some(p) => DenseVector.vertcat(DenseVector(1.0), activationFunction(inputs))
+        case _ => inputs
+      }
+
       //compute outputs given current weights and received inputs, then pass them through activation function
-      val outputs = computeLayerOutputs(inputs, latestWeights)
+      val outputs = computeLayerOutputs(activatedInput, latestWeights)
       val activatedOutputs = activationFunction(outputs)
-      val outputWithBias = DenseVector.vertcat(DenseVector(1.0), activatedOutputs)
-      activations = inputs
+
+      activations = parentLayer match{
+        case Some(p)=>DenseVector.vertcat(DenseVector(1.0), inputs)
+        case _ => inputs
+      }
 
       childLayer match {
 
         //If there is a child layer, send it the outputs with an added bias
         case Some(nextLayer) => {
-          nextLayer ! ForwardPass(outputWithBias, target)
+          nextLayer ! ForwardPass(outputs, target)
         }
 
         //if this is the final layer of the neural network, compute prediction error and send the result backwards.
         case _ => {
 
+          println("prediction: ",activatedOutputs)
           //compute deltas which we can use to compute the gradients for this layer's weights.
-          val deltas=computePredictionError(activatedOutputs, target)
-          val gradient = computeGradient(deltas, activations, activationFunction)
+          val deltas = computePredictionError(activatedOutputs, target)
+          val gradient = computeGradient(deltas, activatedInput)
 
           //send gradients for updating in the parameter shard actor
           parameterShardId ! Gradient(gradient)
@@ -77,7 +87,7 @@ class Layer(replicaId: Int
           context.sender() ! BackwardPass(parentDeltas)
 
           //If this is the last layer then send the predictions to the output actor
-          outputAct.get ! Output(replicaId,activatedOutputs)
+          outputAct.get ! Output(replicaId, activatedOutputs)
         }
       }
 
@@ -87,7 +97,11 @@ class Layer(replicaId: Int
 
       //compute gradient of layer weights given deltas from child layer and activations from forward pass and
       //send the resulting gradient to the parameter shard for updating.
-      val gradient = computeGradient(childDeltas, activations, activationFunction)
+
+      println("Backward passssss")
+
+
+      val gradient = computeGradient(childDeltas, activatedInput)
       parameterShardId ! Gradient(gradient)
 
       parentLayer match {
