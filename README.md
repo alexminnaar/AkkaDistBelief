@@ -1,4 +1,5 @@
-#Akka DistBelief
+Akka DistBelief
+===============
 
 DistBelief is a framework for training deep neural networks with a cluster of machines rather than GPUs.  The main
 algorithm used is _Downpour SGD_ in which multiple replicas of the neural network model are trained in parallel.  Furthermore,
@@ -12,6 +13,6 @@ At its core, _Downpour SGD_ relies asynchronous message passing which makes is a
  framework.  In this repo all partitions (i.e. data shards, parameter shards, model replica layers) are represented
  as Akka actors that communicate asynchronously via message passing.
  
- #References
+ ###References
  
- * "Large Scale Distributed Deep Networks".  Jeffrey Dean and Greg S. Corrado and Rajat Monga and Kai Chen and Matthieu Devin and Quoc V. Le and Mark Z. Mao and Marc’Aurelio Ranzato and Andrew Senior and Paul Tucker and Ke Yang and Andrew Y. Ng.  NIPS 2012.
+ * _Large Scale Distributed Deep Networks_.  Jeffrey Dean and Greg S. Corrado and Rajat Monga and Kai Chen and Matthieu Devin and Quoc V. Le and Mark Z. Mao and Marc’Aurelio Ranzato and Andrew Senior and Paul Tucker and Ke Yang and Andrew Y. Ng.  NIPS 2012.
