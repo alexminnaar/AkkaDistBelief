@@ -14,7 +14,6 @@ object Master {
 
 }
 
-
 class Master(dataSet: Seq[Example],
              dataPerReplica: Int,
              layerDimensions: Seq[Int],

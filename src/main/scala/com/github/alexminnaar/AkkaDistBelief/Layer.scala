@@ -74,7 +74,6 @@ class Layer(replicaId: Int
         //if this is the final layer of the neural network, compute prediction error and send the result backwards.
         case _ => {
 
-          println("prediction: ",activatedOutputs)
           //compute deltas which we can use to compute the gradients for this layer's weights.
           val deltas = computePredictionError(activatedOutputs, target)
           val gradient = computeGradient(deltas, activatedInput)
@@ -97,10 +96,6 @@ class Layer(replicaId: Int
 
       //compute gradient of layer weights given deltas from child layer and activations from forward pass and
       //send the resulting gradient to the parameter shard for updating.
-
-      println("Backward passssss")
-
-
       val gradient = computeGradient(childDeltas, activatedInput)
       parameterShardId ! Gradient(gradient)
 
@@ -117,9 +112,7 @@ class Layer(replicaId: Int
         //If this is the first layer, let data shard know we are ready to update weights and process another data point.
         case _ => context.parent ! ReadyToProcess
       }
-
     }
-
   }
 
 

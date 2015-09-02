@@ -21,15 +21,7 @@ object NeuralNetworkOps {
                     , currentWeights: DenseMatrix[Double]
                     , activationFunctionDerivative: DenseVector[Double] => DenseVector[Double]): DenseVector[Double] = {
 
-    //println("delta comp child deltas ",childDeltas)
-    //println("delta comp weights ",currentWeights.delete(0, Axis._1))
-    //println("activations ",thisLayerActivations(1 to -1))
-
     val dw = currentWeights.delete(0, Axis._1).t * childDeltas
-    //println("dw ", dw)
-    //println("plain activations ",thisLayerActivations(1 to -1))
-    //println("activation derivative, ", activationFunctionDerivative(thisLayerActivations(1 to -1)))
-
     activationFunctionDerivative(thisLayerActivations(1 to -1)) :* dw
   }
 
@@ -37,8 +29,6 @@ object NeuralNetworkOps {
   def computeGradient(deltas: DenseVector[Double]
                       , thisLayerActivations: DenseVector[Double]): DenseMatrix[Double] = {
 
-    println("deltas: ",deltas)
-    println("activations ",thisLayerActivations)
     outerProd(deltas, thisLayerActivations)
   }
 

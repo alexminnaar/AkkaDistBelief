@@ -33,19 +33,7 @@ class ParameterShard(shardId: Int
     */
     case Gradient(g) => {
 
-      println(s"gradient: ${g.t}")
-      println(s"latestParameter: ${latestParameter}")
-
-      val gtrans=g.t
-
-      println(gtrans.rows,gtrans.cols)
-      println(latestParameter.rows,latestParameter.cols)
-
-      //val t=latestParameter + gtrans.delete(0,Axis._1)
-
-      latestParameter = latestParameter + gtrans
-
-      println("new weights: ",latestParameter)
+      latestParameter = latestParameter + g.t
 
     }
 
