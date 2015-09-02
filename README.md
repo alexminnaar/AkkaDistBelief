@@ -13,6 +13,6 @@ At its core, _Downpour SGD_ relies asynchronous message passing which makes is a
  framework.  In this repo all partitions (i.e. data shards, parameter shards, model replica layers) are represented
  as Akka actors that communicate asynchronously via message passing.
  
- ###References
+ __References__
  
- * _Large Scale Distributed Deep Networks_.  Jeffrey Dean and Greg S. Corrado and Rajat Monga and Kai Chen and Matthieu Devin and Quoc V. Le and Mark Z. Mao and Marc’Aurelio Ranzato and Andrew Senior and Paul Tucker and Ke Yang and Andrew Y. Ng.  NIPS 2012.
+ * _Large Scale Distributed Deep Networks_.  Jeffrey Dean, Greg S. Corrado, Rajat Monga, Kai Chen, Matthieu Devin, Quoc V. Le, Mark Z. Mao, Marc’Aurelio Ranzato, Andrew Senior, Paul Tucker, Ke Yang and Andrew Y. Ng.  NIPS 2012.
