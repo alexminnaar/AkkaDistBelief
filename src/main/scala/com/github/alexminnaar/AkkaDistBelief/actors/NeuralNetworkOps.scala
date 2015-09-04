@@ -1,7 +1,6 @@
-package com.github.alexminnaar.AkkaDistBelief
+package com.github.alexminnaar.AkkaDistBelief.actors
 
-import breeze.linalg.{Axis, *, DenseMatrix, DenseVector}
-import breeze.numerics._
+import breeze.linalg.{*, Axis, DenseMatrix, DenseVector}
 import breeze.stats.distributions.Gaussian
 
 

@@ -1,4 +1,4 @@
-package com.github.alexminnaar.AkkaDistBelief
+package com.github.alexminnaar.AkkaDistBelief.actors
 
 import akka.actor.Actor
 import breeze.linalg.DenseVector
@@ -11,7 +11,7 @@ object OutputActor {
 
 class OutputActor extends Actor {
 
-  import OutputActor._
+  import com.github.alexminnaar.AkkaDistBelief.actors.OutputActor._
 
   var latestOutputs: Map[Int, DenseVector[Double]] = Map.empty
 

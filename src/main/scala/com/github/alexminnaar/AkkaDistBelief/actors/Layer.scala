@@ -1,10 +1,10 @@
-package com.github.alexminnaar.AkkaDistBelief
+package com.github.alexminnaar.AkkaDistBelief.actors
 
-import akka.actor.{ActorRef, Actor}
-import breeze.linalg.{Axis, *, DenseVector, DenseMatrix}
-import com.github.alexminnaar.AkkaDistBelief.DataShard.{ReadyToProcess, FetchParameters}
-import com.github.alexminnaar.AkkaDistBelief.ParameterShard.{ParameterRequest, LatestParameters}
+import akka.actor.{Actor, ActorRef}
+import breeze.linalg.{DenseMatrix, DenseVector}
 import NeuralNetworkOps._
+import ParameterShard.{LatestParameters, ParameterRequest}
+import com.github.alexminnaar.AkkaDistBelief.actors.DataShard.{FetchParameters, ReadyToProcess}
 
 object Layer {
 
@@ -28,8 +28,7 @@ class Layer(replicaId: Int
             , parameterShardId: ActorRef
             , outputAct: Option[ActorRef]) extends Actor {
 
-  import com.github.alexminnaar.AkkaDistBelief.Layer._
-  import com.github.alexminnaar.AkkaDistBelief.OutputActor.Output
+  import OutputActor.Output
 
 
   var latestWeights: DenseMatrix[Double] = _

@@ -1,10 +1,9 @@
-package com.github.alexminnaar.AkkaDistBelief
+package com.github.alexminnaar.AkkaDistBelief.actors
 
-import akka.actor.{ActorRef, Props, Actor}
-import breeze.linalg.{DenseVector, DenseMatrix}
-import breeze.stats.distributions.Gaussian
-import com.github.alexminnaar.AkkaDistBelief.DataShard.ReadyToProcess
-import com.github.alexminnaar.AkkaDistBelief.Master.{Done, Start}
+import akka.actor.{Actor, ActorRef, Props}
+import breeze.linalg.DenseVector
+import com.github.alexminnaar.AkkaDistBelief.actors.DataShard.ReadyToProcess
+import com.github.alexminnaar.AkkaDistBelief.Example
 
 object Master {
 

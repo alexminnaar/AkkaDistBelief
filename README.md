@@ -9,7 +9,7 @@ read and update their corresponding shard in the parameter server.
 
 ![downpour sgd](/downpour_sgd.png)
 
-At its core, _Downpour SGD_ relies asynchronous message passing which makes is a perfect fit for the Akka actor
+At its core, _Downpour SGD_ relies on asynchronous message passing which makes is a perfect fit for the Akka actor
  framework.  In this repo all partitions (i.e. data shards, parameter shards, model replica layers) are represented
  as Akka actors that communicate asynchronously via message passing.
  

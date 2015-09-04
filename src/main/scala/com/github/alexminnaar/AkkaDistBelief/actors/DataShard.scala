@@ -1,9 +1,10 @@
-package com.github.alexminnaar.AkkaDistBelief
+package com.github.alexminnaar.AkkaDistBelief.actors
 
-import akka.actor.{Props, ActorRef, Actor}
+import akka.actor.{Actor, ActorRef, Props}
 import breeze.linalg.DenseVector
-import com.github.alexminnaar.AkkaDistBelief.Layer.{MyChild, ForwardPass, DoneFetchingParameters}
-import com.github.alexminnaar.AkkaDistBelief.Master.Done
+import Layer.{DoneFetchingParameters, ForwardPass, MyChild}
+import Master.Done
+import com.github.alexminnaar.AkkaDistBelief.Example
 
 
 object DataShard {
@@ -19,8 +20,6 @@ class DataShard(shardId: Int,
                 activation: DenseVector[Double] => DenseVector[Double],
                 activationDerivative: DenseVector[Double] => DenseVector[Double],
                 parameterShards: Seq[ActorRef]) extends Actor {
-
-  import com.github.alexminnaar.AkkaDistBelief.DataShard._
 
   val numLayers = parameterShards.size
 

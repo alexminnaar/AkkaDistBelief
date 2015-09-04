@@ -1,11 +1,13 @@
-import akka.actor.{ActorRef, Props, ActorSystem}
+package com.github.alexminnaar.AkkaDistBelief
+
+import akka.actor.ActorSystem
 import akka.testkit.{TestActorRef, TestKit}
 import breeze.linalg.{DenseMatrix, DenseVector}
 import breeze.numerics.sigmoid
-import com.github.alexminnaar.AkkaDistBelief.DataShard.FetchParameters
-import com.github.alexminnaar.AkkaDistBelief.Layer.{MyChild, ForwardPass}
-import com.github.alexminnaar.AkkaDistBelief.{OutputActor, ParameterShard, Layer}
-import org.scalatest.{WordSpecLike, MustMatchers}
+import com.github.alexminnaar.AkkaDistBelief.actors.{ParameterShard, OutputActor, Layer, DataShard}
+import DataShard.FetchParameters
+import Layer.{ForwardPass, MyChild}
+import org.scalatest.{MustMatchers, WordSpecLike}
 
 
 class LayerTest extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers {
@@ -95,11 +97,11 @@ class LayerTest extends TestKit(ActorSystem("testSystem")) with WordSpecLike wit
       layer1 ! ForwardPass(DenseVector(1.0, 0.0, 0.0), DenseVector(0.0))
 
       parameterShardTestActor1.underlyingActor.latestParameter must equal(
-        DenseMatrix((0.33781302405590624, 0.129952, -0.923123)
-          , (-0.13124936807034784, 0.570345, -0.328932)))
+        DenseMatrix((0.3408901024055906, 0.129952, -0.923123)
+          , (-0.11682563680703478, 0.570345, -0.328932)))
 
       parameterShardTestActor2.underlyingActor.latestParameter must equal(
-        DenseMatrix((-1.0788823205543698, 0.11478190229158253, 0.7123503396045129)))
+        DenseMatrix((-1.001968932055437, 0.15973699022915824, 0.7485939339604513)))
 
     }
 

@@ -1,8 +1,8 @@
-package com.github.alexminnaar.AkkaDistBelief
+package com.github.alexminnaar.AkkaDistBelief.actors
 
 import akka.actor.Actor
-import breeze.linalg.{Axis, DenseMatrix}
-import com.github.alexminnaar.AkkaDistBelief.Layer.Gradient
+import breeze.linalg.DenseMatrix
+import com.github.alexminnaar.AkkaDistBelief.actors.Layer.Gradient
 
 
 object ParameterShard {
@@ -16,8 +16,6 @@ object ParameterShard {
 class ParameterShard(shardId: Int
                      , learningRate: Double
                      , initialWeight: DenseMatrix[Double]) extends Actor {
-
-  import com.github.alexminnaar.AkkaDistBelief.ParameterShard._
 
   //initialize randomly
   var latestParameter: DenseMatrix[Double] = initialWeight
@@ -33,7 +31,7 @@ class ParameterShard(shardId: Int
     */
     case Gradient(g) => {
 
-      latestParameter = latestParameter + g.t
+      latestParameter = latestParameter + g.t*learningRate
 
     }
 
