@@ -5,6 +5,7 @@ import breeze.linalg.DenseVector
 import Layer.{DoneFetchingParameters, ForwardPass, MyChild}
 import Master.Done
 import com.github.alexminnaar.AkkaDistBelief.Example
+import com.github.alexminnaar.AkkaDistBelief.actors.DataShard.{FetchParameters, ReadyToProcess}
 
 
 object DataShard {
@@ -15,6 +16,14 @@ object DataShard {
 
 }
 
+/**
+ * The data shard actor for the DistBelief implementation.
+ * @param shardId Unique Id for this data shard.
+ * @param trainingData The training data for this shard.
+ * @param activation The activation function.
+ * @param activationDerivative The derivative of the activation function.
+ * @param parameterShards actorRefs for the parameter shards that hold the model parameters.
+ */
 class DataShard(shardId: Int,
                 trainingData: Seq[Example],
                 activation: DenseVector[Double] => DenseVector[Double],
@@ -59,6 +68,7 @@ class DataShard(shardId: Int,
         in order for the next data point to be processed.  Go into a waiting context until they have all been updated.
         */
     case ReadyToProcess => {
+
       layers.foreach(_ ! FetchParameters)
       context.become(waitForAllLayerUpdates)
     }
@@ -74,6 +84,8 @@ class DataShard(shardId: Int,
 
       //if all layers have updated to the latest parameters, can then process a new data point.
       if (layersNotUpdated.isEmpty) {
+
+        //println(s"Data shard ${shardId} done updating parameters!")
 
         if (trainingDataIterator.hasNext) {
           val dataPoint = trainingDataIterator.next()

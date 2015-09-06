@@ -1,15 +1,18 @@
 package com.github.alexminnaar.AkkaDistBelief.actors
 
-import akka.actor.Actor
+import akka.actor.{ActorLogging, Actor}
 import breeze.linalg.DenseVector
 
 object OutputActor {
 
-  case class Output(replicaId: Int, output: DenseVector[Double])
+  case class Output(replicaId: Int, target: DenseVector[Double], output: DenseVector[Double])
 
 }
 
-class OutputActor extends Actor {
+/**
+ * Actor that logs outputs and keeps track of the last predictions of each model replica
+ */
+class OutputActor extends Actor with ActorLogging{
 
   import com.github.alexminnaar.AkkaDistBelief.actors.OutputActor._
 
@@ -17,11 +20,11 @@ class OutputActor extends Actor {
 
   def receive = {
 
-    case Output(replica, output) => {
+    case Output(replica, target, output) => {
 
       latestOutputs += (replica -> output)
 
-      println(s"replica id ${replica}, output: ${output}")
+      log.info(s"replica id ${replica}, output: ${output}, target ${target}")
     }
 
 

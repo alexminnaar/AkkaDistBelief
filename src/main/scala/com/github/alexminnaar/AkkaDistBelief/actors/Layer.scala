@@ -2,15 +2,17 @@ package com.github.alexminnaar.AkkaDistBelief.actors
 
 import akka.actor.{Actor, ActorRef}
 import breeze.linalg.{DenseMatrix, DenseVector}
+import com.github.alexminnaar.AkkaDistBelief.NeuralNetworkOps
 import NeuralNetworkOps._
 import ParameterShard.{LatestParameters, ParameterRequest}
 import com.github.alexminnaar.AkkaDistBelief.actors.DataShard.{FetchParameters, ReadyToProcess}
+import com.github.alexminnaar.AkkaDistBelief.actors.OutputActor.Output
 
 object Layer {
 
   case class DoneFetchingParameters(layerId: Int)
 
-  case class Gradient(g: DenseMatrix[Double])
+  case class Gradient(g: DenseMatrix[Double], replicaId: Int, layerId: Int)
 
   case class ForwardPass(inputs: DenseVector[Double], target: DenseVector[Double])
 
@@ -20,6 +22,16 @@ object Layer {
 
 }
 
+/**
+ * An Akka actor representing a layer in a DistBelief neural network replica.
+ * @param replicaId A unique model replica identifier.
+ * @param layerId The layer of the replica that this actor represents
+ * @param activationFunction Neural network activation function.
+ * @param activationFunctionDerivative Derivative of activation function.
+ * @param parentLayer actorRef of this actor's parent layer (may not exist if this is an input layer).
+ * @param parameterShardId actorRef of parameter shard corresponding to this layer.
+ * @param outputAct actorRef of output actor.
+ */
 class Layer(replicaId: Int
             , layerId: Int
             , activationFunction: DenseVector[Double] => DenseVector[Double]
@@ -28,7 +40,7 @@ class Layer(replicaId: Int
             , parameterShardId: ActorRef
             , outputAct: Option[ActorRef]) extends Actor {
 
-  import OutputActor.Output
+  import com.github.alexminnaar.AkkaDistBelief.actors.Layer._
 
 
   var latestWeights: DenseMatrix[Double] = _
@@ -40,7 +52,7 @@ class Layer(replicaId: Int
 
     //Before we process a data point, we must update the parameter weights for this layer
     case FetchParameters => {
-      parameterShardId ! ParameterRequest
+      parameterShardId ! ParameterRequest(replicaId, layerId)
       context.become(waitForParameters)
     }
 
@@ -49,7 +61,7 @@ class Layer(replicaId: Int
 
     case ForwardPass(inputs, target) => {
 
-      activatedInput=parentLayer match {
+      activatedInput = parentLayer match {
         case Some(p) => DenseVector.vertcat(DenseVector(1.0), activationFunction(inputs))
         case _ => inputs
       }
@@ -58,8 +70,8 @@ class Layer(replicaId: Int
       val outputs = computeLayerOutputs(activatedInput, latestWeights)
       val activatedOutputs = activationFunction(outputs)
 
-      activations = parentLayer match{
-        case Some(p)=>DenseVector.vertcat(DenseVector(1.0), inputs)
+      activations = parentLayer match {
+        case Some(p) => DenseVector.vertcat(DenseVector(1.0), inputs)
         case _ => inputs
       }
 
@@ -78,14 +90,14 @@ class Layer(replicaId: Int
           val gradient = computeGradient(deltas, activatedInput)
 
           //send gradients for updating in the parameter shard actor
-          parameterShardId ! Gradient(gradient)
+          parameterShardId ! Gradient(gradient, replicaId, layerId)
 
           //compute the deltas for this parent layer (there must be one if this is the output layer)
           val parentDeltas = computeDeltas(deltas, activations, latestWeights, activationFunctionDerivative)
           context.sender() ! BackwardPass(parentDeltas)
 
           //If this is the last layer then send the predictions to the output actor
-          outputAct.get ! Output(replicaId, activatedOutputs)
+          outputAct.get ! Output(replicaId, target, activatedOutputs)
         }
       }
 
@@ -96,7 +108,7 @@ class Layer(replicaId: Int
       //compute gradient of layer weights given deltas from child layer and activations from forward pass and
       //send the resulting gradient to the parameter shard for updating.
       val gradient = computeGradient(childDeltas, activatedInput)
-      parameterShardId ! Gradient(gradient)
+      parameterShardId ! Gradient(gradient, replicaId, layerId)
 
       parentLayer match {
 
@@ -124,7 +136,6 @@ class Layer(replicaId: Int
     case LatestParameters(weights) => {
       latestWeights = weights
       context.parent ! DoneFetchingParameters(layerId)
-
       context.unbecome()
     }
 

@@ -89,7 +89,7 @@ class ShardTest extends TestKit(ActorSystem("testSystem")) with WordSpecLike wit
 
       val g = DenseMatrix((0.1, 0.1), (0.1, 0.1))
 
-      parameterShardTestActor ! Gradient(g)
+      parameterShardTestActor ! Gradient(g, 0, 0)
 
       parameterShardTestActor.underlyingActor.latestParameter must equal(DenseMatrix((0.25, 0.45), (0.55, 0.25)))
 

@@ -1,38 +1,47 @@
 package com.github.alexminnaar.AkkaDistBelief.actors
 
-import akka.actor.Actor
+import akka.actor.{ActorLogging, Actor}
 import breeze.linalg.DenseMatrix
 import com.github.alexminnaar.AkkaDistBelief.actors.Layer.Gradient
+import com.github.alexminnaar.AkkaDistBelief.actors.ParameterShard.{ParameterRequest, LatestParameters}
 
 
 object ParameterShard {
 
-  case object ParameterRequest
+  case class ParameterRequest(dataShardId:Int,layerId:Int)
 
   case class LatestParameters(weights: DenseMatrix[Double])
 
 }
 
+/**
+ * The parameter shard actor for the DistBelief implementation.
+ * @param shardId Unique Id for this parameter shard.
+ * @param learningRate Learning rate for parameter updates.
+ * @param initialWeight Initial random weight matrix.
+ */
 class ParameterShard(shardId: Int
                      , learningRate: Double
-                     , initialWeight: DenseMatrix[Double]) extends Actor {
+                     , initialWeight: DenseMatrix[Double]) extends Actor with ActorLogging{
 
-  //initialize randomly
+  //weights initialize randomly
   var latestParameter: DenseMatrix[Double] = initialWeight
 
   def receive = {
 
     //A layer corresponding to this shardId in some model replica has requested the latest version of the parameters.
-    case ParameterRequest => context.sender() ! LatestParameters(latestParameter)
+    case ParameterRequest(shardId, layerId) => {
+      log.info(s"layer ${layerId} weights read by model replica ${shardId}")
+      context.sender() ! LatestParameters(latestParameter)
+    }
 
     /*
     A layer corresponding to this shardId in some model replica has computed a gradient, so we must update our
     parameters according to this gradient.
     */
-    case Gradient(g) => {
-
+    case Gradient(g, replicaId, layerId) => {
+      log.info(s"layer ${layerId} weights updated by model replica ${replicaId}")
       latestParameter = latestParameter + g.t*learningRate
-
     }
 
   }

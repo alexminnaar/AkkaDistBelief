@@ -3,7 +3,7 @@ package com.github.alexminnaar.AkkaDistBelief.actors
 import akka.actor.{Actor, ActorRef, Props}
 import breeze.linalg.DenseVector
 import com.github.alexminnaar.AkkaDistBelief.actors.DataShard.ReadyToProcess
-import com.github.alexminnaar.AkkaDistBelief.Example
+import com.github.alexminnaar.AkkaDistBelief.{NeuralNetworkOps, Example}
 
 object Master {
 
@@ -11,14 +11,27 @@ object Master {
 
   case object Start
 
+  case object JobDone
+
 }
 
+/**
+ * The master actor of the DistBelief implementation.
+ * @param dataSet The data set to be used for training.
+ * @param dataPerReplica The number of data points to be used in a data shard.
+ * @param layerDimensions The number of neural units in each layer of the neural network model.
+ * @param activation The activation function.
+ * @param activationDerivative The derivative of the activation function.
+ * @param learningRate The learning rate for parameter updates.
+ */
 class Master(dataSet: Seq[Example],
              dataPerReplica: Int,
              layerDimensions: Seq[Int],
              activation: DenseVector[Double] => DenseVector[Double],
              activationDerivative: DenseVector[Double] => DenseVector[Double],
              learningRate: Double) extends Actor {
+
+  import com.github.alexminnaar.AkkaDistBelief.actors.Master._
 
   val numLayers = layerDimensions.size
 
@@ -34,29 +47,43 @@ class Master(dataSet: Seq[Example],
     parameterShardActors(i) = context.actorOf(Props(new ParameterShard(
       i
       , learningRate
-      , NeuralNetworkOps.randomMatrix(layerDimensions(i), layerDimensions(i + 1))
+      , NeuralNetworkOps.randomMatrix(layerDimensions(i+1), layerDimensions(i)+1)
     )))
   }
+
+  println(s"${numLayers - 1} parameter shards initiated!")
 
   //create actors for each data shard/replica.  Each replica needs to know about all parameter shards because they will
   //be reading from them and updating them
   val dataShardActors = dataShards.zipWithIndex.map { dataShard =>
     context.actorOf(Props(new DataShard(dataShard._2
       , dataShard._1
-      , activation: DenseVector[Double] => DenseVector[Double]
-      , activationDerivative: DenseVector[Double] => DenseVector[Double]
+      , activation
+      , activationDerivative
       , parameterShardActors)))
   }
 
+  println(s"${dataShards.size} data shards initiated!")
+
   var numShardsFinished = 0
+
 
   def receive = {
 
     case Start => dataShardActors.foreach(_ ! ReadyToProcess)
 
     case Done(id) => {
+
       numShardsFinished += 1
-      if (numShardsFinished == dataShards.size) println("DONE!!!!!!!!!!!!!!!")
+
+      println(s"data shard ${id} finished processing!")
+      println(s" ${ numShardsFinished} shards finished of ${dataShards.size}")
+
+      if (numShardsFinished == dataShards.size) {
+        context.parent ! JobDone
+        context.stop(self)
+      }
+
     }
 
   }
