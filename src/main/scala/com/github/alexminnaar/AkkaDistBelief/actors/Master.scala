@@ -1,6 +1,6 @@
 package com.github.alexminnaar.AkkaDistBelief.actors
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{ActorLogging, Actor, ActorRef, Props}
 import breeze.linalg.DenseVector
 import com.github.alexminnaar.AkkaDistBelief.actors.DataShard.ReadyToProcess
 import com.github.alexminnaar.AkkaDistBelief.{NeuralNetworkOps, Example}
@@ -29,7 +29,7 @@ class Master(dataSet: Seq[Example],
              layerDimensions: Seq[Int],
              activation: DenseVector[Double] => DenseVector[Double],
              activationDerivative: DenseVector[Double] => DenseVector[Double],
-             learningRate: Double) extends Actor {
+             learningRate: Double) extends Actor with ActorLogging{
 
   import com.github.alexminnaar.AkkaDistBelief.actors.Master._
 
@@ -51,7 +51,7 @@ class Master(dataSet: Seq[Example],
     )))
   }
 
-  println(s"${numLayers - 1} parameter shards initiated!")
+  log.info(s"${numLayers - 1} parameter shards initiated!")
 
   //create actors for each data shard/replica.  Each replica needs to know about all parameter shards because they will
   //be reading from them and updating them
@@ -63,10 +63,9 @@ class Master(dataSet: Seq[Example],
       , parameterShardActors)))
   }
 
-  println(s"${dataShards.size} data shards initiated!")
+  log.info(s"${dataShards.size} data shards initiated!")
 
   var numShardsFinished = 0
-
 
   def receive = {
 
@@ -76,8 +75,7 @@ class Master(dataSet: Seq[Example],
 
       numShardsFinished += 1
 
-      println(s"data shard ${id} finished processing!")
-      println(s" ${ numShardsFinished} shards finished of ${dataShards.size}")
+      log.info(s" ${ numShardsFinished} shards finished of ${dataShards.size}")
 
       if (numShardsFinished == dataShards.size) {
         context.parent ! JobDone

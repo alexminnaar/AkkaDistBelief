@@ -1,6 +1,6 @@
 package com.github.alexminnaar.AkkaDistBelief.examples
 
-import akka.actor.{Props, Actor}
+import akka.actor.{ActorLogging, Props, Actor}
 import breeze.linalg.DenseVector
 import breeze.numerics._
 import com.github.alexminnaar.AkkaDistBelief.Example
@@ -10,7 +10,7 @@ import com.github.alexminnaar.AkkaDistBelief.actors.Master.{Start, JobDone}
 import scala.util.Random
 
 /*
-An example using DistBelief to learn the non linear XOR function
+An example using DistBelief to learn the non-linear XOR function
 
 A | B | Output
 ---------------
@@ -21,7 +21,7 @@ A | B | Output
 
  */
 
-class XOR extends Actor {
+class XOR extends Actor with ActorLogging{
 
   val random = new Random
 
@@ -50,7 +50,7 @@ class XOR extends Actor {
   DistBeliefMaster ! Start
 
   def receive = {
-    case JobDone => println("Yay finished!!!!")
+    case JobDone => log.info("Finished Computing XOR Example!!!!!")
   }
 
 
