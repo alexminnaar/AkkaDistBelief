@@ -1,6 +1,6 @@
 package com.github.alexminnaar.AkkaDistBelief.actors
 
-import akka.actor.{ActorLogging, Actor}
+import akka.actor.{Actor, ActorLogging}
 import breeze.linalg.DenseVector
 
 object OutputActor {
@@ -12,7 +12,7 @@ object OutputActor {
 /**
  * Actor that logs outputs and keeps track of the last predictions of each model replica
  */
-class OutputActor extends Actor with ActorLogging{
+class OutputActor extends Actor with ActorLogging {
 
   import com.github.alexminnaar.AkkaDistBelief.actors.OutputActor._
 

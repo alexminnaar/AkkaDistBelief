@@ -2,6 +2,7 @@ package com.github.alexminnaar.AkkaDistBelief
 
 import breeze.linalg.{*, Axis, DenseMatrix, DenseVector}
 import breeze.stats.distributions.Gaussian
+import com.github.alexminnaar.AkkaDistBelief.Types.{Activation, ActivationFunction, Delta, LayerWeight}
 
 /*
 A collection of neural network operations required for backpropagation
@@ -14,8 +15,8 @@ object NeuralNetworkOps {
    * @param weights Weight parameters associated with layer.
    * @return Weighted sum of input.
    */
-  def computeLayerOutputs(input: DenseVector[Double]
-                          , weights: DenseMatrix[Double]): DenseVector[Double] = {
+  def computeLayerOutputs(input: Activation,
+                          weights: LayerWeight): Activation = {
     weights * input
   }
 
@@ -27,10 +28,10 @@ object NeuralNetworkOps {
    * @param activationFunctionDerivative derivative of activation function for this layer.
    * @return This layer's deltas.
    */
-  def computeDeltas(childDeltas: DenseVector[Double]
-                    , thisLayerActivations: DenseVector[Double]
-                    , currentWeights: DenseMatrix[Double]
-                    , activationFunctionDerivative: DenseVector[Double] => DenseVector[Double]): DenseVector[Double] = {
+  def computeDeltas(childDeltas: Delta,
+                    thisLayerActivations: Activation,
+                    currentWeights: LayerWeight,
+                    activationFunctionDerivative: ActivationFunction): Delta = {
 
     val dw = currentWeights.delete(0, Axis._1).t * childDeltas
     activationFunctionDerivative(thisLayerActivations(1 to -1)) :* dw
@@ -42,8 +43,8 @@ object NeuralNetworkOps {
    * @param thisLayerActivations activations of current layer.
    * @return weight gradients.
    */
-  def computeGradient(deltas: DenseVector[Double]
-                      , thisLayerActivations: DenseVector[Double]): DenseMatrix[Double] = {
+  def computeGradient(deltas: Delta,
+                      thisLayerActivations: Activation): DenseMatrix[Double] = {
 
     outerProd(deltas, thisLayerActivations)
   }
@@ -75,7 +76,7 @@ object NeuralNetworkOps {
   /**
    * Create a random DenseMatrix from samples from Normal(0,0.2) distribution
    */
-  def randomMatrix(numRows: Int, numCols: Int): DenseMatrix[Double] = {
+  def randomMatrix(numRows: Int, numCols: Int): LayerWeight = {
 
     val samples = Gaussian(0, 0.2).sample(numRows * numCols).toArray
     new DenseMatrix[Double](numRows, numCols, samples)

@@ -21,7 +21,7 @@ A | B | Output
 
  */
 
-class XOR extends Actor with ActorLogging{
+class XOR extends Actor with ActorLogging {
 
   val random = new Random
 
@@ -39,13 +39,14 @@ class XOR extends Actor with ActorLogging{
 
   //create 25 model replicas each training 2000 data points in parallel
   val DistBeliefMaster = context.actorOf(Props(new Master(
-    trainingSet
-    , 2000
-    , Seq(2, 2, 1)
-    , (x: DenseVector[Double]) => x.map(el => sigmoid(el))
-    , (x: DenseVector[Double]) => x.map(el => sigmoid(el) * (1 - sigmoid(el)))
-    , 0.5)))
-
+    dataSet = trainingSet,
+    dataPerReplica = 2000,
+    layerDimensions = Seq(2, 2, 1),
+    activation = (x: DenseVector[Double]) => x.map(el => sigmoid(el)),
+    activationDerivative = (x: DenseVector[Double]) => x.map(el => sigmoid(el) * (1 - sigmoid(el))),
+    learningRate = 0.5)
+  )
+  )
 
   DistBeliefMaster ! Start
 

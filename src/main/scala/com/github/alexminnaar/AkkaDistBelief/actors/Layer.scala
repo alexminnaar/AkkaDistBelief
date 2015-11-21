@@ -3,10 +3,11 @@ package com.github.alexminnaar.AkkaDistBelief.actors
 import akka.actor.{Actor, ActorRef}
 import breeze.linalg.{DenseMatrix, DenseVector}
 import com.github.alexminnaar.AkkaDistBelief.NeuralNetworkOps
-import NeuralNetworkOps._
-import ParameterShard.{LatestParameters, ParameterRequest}
+import com.github.alexminnaar.AkkaDistBelief.NeuralNetworkOps._
+import com.github.alexminnaar.AkkaDistBelief.Types.{Activation, ActivationFunction, Delta, LayerWeight}
 import com.github.alexminnaar.AkkaDistBelief.actors.DataShard.{FetchParameters, ReadyToProcess}
 import com.github.alexminnaar.AkkaDistBelief.actors.OutputActor.Output
+import com.github.alexminnaar.AkkaDistBelief.actors.ParameterShard.{LatestParameters, ParameterRequest}
 
 object Layer {
 
@@ -16,7 +17,7 @@ object Layer {
 
   case class ForwardPass(inputs: DenseVector[Double], target: DenseVector[Double])
 
-  case class BackwardPass(deltas: DenseVector[Double])
+  case class BackwardPass(deltas: Delta)
 
   case class MyChild(ar: ActorRef)
 
@@ -32,20 +33,20 @@ object Layer {
  * @param parameterShardId actorRef of parameter shard corresponding to this layer.
  * @param outputAct actorRef of output actor.
  */
-class Layer(replicaId: Int
-            , layerId: Int
-            , activationFunction: DenseVector[Double] => DenseVector[Double]
-            , activationFunctionDerivative: DenseVector[Double] => DenseVector[Double]
-            , parentLayer: Option[ActorRef]
-            , parameterShardId: ActorRef
-            , outputAct: Option[ActorRef]) extends Actor {
+class Layer(replicaId: Int,
+            layerId: Int,
+            activationFunction: ActivationFunction,
+            activationFunctionDerivative: ActivationFunction,
+            parentLayer: Option[ActorRef],
+            parameterShardId: ActorRef,
+            outputAct: Option[ActorRef]) extends Actor {
 
   import com.github.alexminnaar.AkkaDistBelief.actors.Layer._
 
 
-  var latestWeights: DenseMatrix[Double] = _
-  var activations: DenseVector[Double] = _
-  var activatedInput: DenseVector[Double] = _
+  var latestWeights: LayerWeight = _
+  var activations: Activation = _
+  var activatedInput: Activation = _
   var childLayer: Option[ActorRef] = None
 
   def receive = {
