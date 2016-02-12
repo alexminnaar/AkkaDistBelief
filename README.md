@@ -31,10 +31,10 @@ class XOR extends Actor with ActorLogging{
   val random = new Random
 
   val possibleExamples = Seq(
-    Example(DenseVector(1.0, 0.0, 0.0), DenseVector(0.0))
-    , Example(DenseVector(1.0, 0.0, 1.0), DenseVector(1.0))
-    , Example(DenseVector(1.0, 1.0, 0.0), DenseVector(1.0))
-    , Example(DenseVector(1.0, 1.0, 1.0), DenseVector(0.0))
+    Example(DenseVector(1.0, 0.0, 0.0), DenseVector(0.0)),
+    Example(DenseVector(1.0, 0.0, 1.0), DenseVector(1.0)),
+    Example(DenseVector(1.0, 1.0, 0.0), DenseVector(1.0)),
+    Example(DenseVector(1.0, 1.0, 1.0), DenseVector(0.0))
   )
 
   //generate 50000 training examples
